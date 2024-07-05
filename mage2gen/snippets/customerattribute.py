@@ -231,7 +231,7 @@ class CustomerAttributeSnippet(Snippet):
 			$customerEntity = $customerSetup->getEavConfig()->getEntityType({entity_type_alias}::ENTITY);
 			$attributeSetId = $customerEntity->getDefaultAttributeSetId();
 
-			/** @var $attributeSet Set */
+			/** @var Set $attributeSet */
 			$attributeSet = $this->attributeSetFactory->create();
 			$attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
 
