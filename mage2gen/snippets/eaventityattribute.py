@@ -158,6 +158,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 """ + methodBody,
 			docstring=[
 				'{@inheritdoc}',
+				'@return void',
 			]
 		))
 
@@ -174,7 +175,8 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 			'getAliases',
 			body="return [];",
 			docstring=[
-				'{@inheritdoc}'
+				'{@inheritdoc}',
+				'@return void',
 			]
 		))
 
