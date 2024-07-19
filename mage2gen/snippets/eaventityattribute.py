@@ -169,14 +169,18 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 			body="""
 				/** @var EavSetup $eavSetup */
 		$eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
-		$eavSetup->removeAttribute({entity_type}, '{attribute_code}');""".format(entity_type=entity_type, attribute_code=attribute_code)
+		$eavSetup->removeAttribute({entity_type}, '{attribute_code}');""".format(entity_type=entity_type, attribute_code=attribute_code),
+			docstring=[
+				'{@inheritdoc}',
+				'@return array',
+			]
 		))
 		install_patch.add_method(Phpmethod(
 			'getAliases',
 			body="return [];",
 			docstring=[
 				'{@inheritdoc}',
-				'@return void',
+				'@return array',
 			]
 		))
 
@@ -185,7 +189,8 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 			access='public static',
 			body="return [\n\n];",
 			docstring=[
-				'{@inheritdoc}'
+				'{@inheritdoc}',
+				'@return array'
 			]
 		))
 
