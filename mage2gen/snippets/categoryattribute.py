@@ -150,7 +150,8 @@ class CategoryAttributeSnippet(Snippet):
                                                         'getAllOptions',
                                                         '',
                                                         '@return array',
-                                                    ]
+                                                    ],
+                                                    return_type='array',
                                                     ))
             self.add_class(source_model_class)
 
@@ -183,6 +184,7 @@ class CategoryAttributeSnippet(Snippet):
         if upgrade_data:
             patchType = 'add'
 
+        
         install_patch = Phpclass(
             'Setup\\Patch\\Data\\{}{}CategoryAttribute'.format(patchType, attribute_code_capitalized),
             implements=['DataPatchInterface', 'PatchRevertableInterface'],
@@ -194,19 +196,15 @@ class CategoryAttributeSnippet(Snippet):
                 'Magento\\Eav\\Setup\\EavSetup',
                 'Magento\\Eav\\Model\\Entity\\Attribute\\ScopedAttributeInterface'
             ],
-            attributes=[
-                "/**\n\t * @var ModuleDataSetupInterface\n\t */\n\tprivate $moduleDataSetup;",
-                "/**\n\t * @var EavSetupFactory\n\t */\n\tprivate $eavSetupFactory;"
-            ]
-            )
-
+            attributes=[]
+        )
         install_patch.add_method(Phpmethod(
             '__construct',
             params=[
-                'ModuleDataSetupInterface $moduleDataSetup',
-                'EavSetupFactory $eavSetupFactory'
+                'private readonly ModuleDataSetupInterface $moduleDataSetup',
+                'private readonly EavSetupFactory $eavSetupFactory'
             ],
-            body="$this->moduleDataSetup = $moduleDataSetup;\n$this->eavSetupFactory = $eavSetupFactory;",
+            body="",
             docstring=[
                 'Constructor',
                 '',
@@ -214,47 +212,50 @@ class CategoryAttributeSnippet(Snippet):
                 '@param EavSetupFactory $eavSetupFactory'
             ]
         ))
-
         install_patch.add_method(Phpmethod(
             'apply',
+            return_type='void',
             body_start='$this->moduleDataSetup->getConnection()->startSetup();',
             body_return='$this->moduleDataSetup->getConnection()->endSetup();',
             body="""
-		/** @var EavSetup $eavSetup */
+/** @var EavSetup $eavSetup */
 $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 """ + methodBody,
             docstring=[
-                '{@inheritdoc}',
+                '@inheritdoc',
             ]
         ))
-
         install_patch.add_method(Phpmethod(
             'revert',
+            return_type='void',
             body_start='$this->moduleDataSetup->getConnection()->startSetup();',
             body_return='$this->moduleDataSetup->getConnection()->endSetup();',
             body="""
-				/** @var EavSetup $eavSetup */
-		$eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
-		$eavSetup->removeAttribute(\Magento\Catalog\Model\Category::ENTITY, '{attribute_code}');""".format(
-                attribute_code=attribute_code)
+/** @var EavSetup $eavSetup */
+$eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
+$eavSetup->removeAttribute(\\Magento\\Catalog\\Model\\Category::ENTITY, '{attribute_code}');
+""".format(attribute_code=attribute_code),
+            docstring=[
+                '@inheritdoc',
+            ]
         ))
         install_patch.add_method(Phpmethod(
             'getAliases',
             body="return [];",
+            return_type='array',
             docstring=[
-                '{@inheritdoc}'
+                '@inheritdoc'
             ]
         ))
-
         install_patch.add_method(Phpmethod(
             'getDependencies',
             access='public static',
+            return_type='array',
             body="return [\n\n];",
             docstring=[
-                '{@inheritdoc}'
+                '@inheritdoc'
             ]
         ))
-
         self.add_class(install_patch)
 
         category_form_file = 'view/adminhtml/ui_component/category_form.xml'

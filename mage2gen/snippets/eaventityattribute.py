@@ -127,19 +127,16 @@ class EavEntityAttributeSnippet(Snippet):
 				'Magento\\Eav\\Setup\\EavSetupFactory',
 				'Magento\\Eav\\Setup\\EavSetup',
 			],
-			attributes=[
-				"/**\n\t * @var ModuleDataSetupInterface\n\t */\n\tprivate $moduleDataSetup;",
-				"/**\n\t * @var EavSetupFactory\n\t */\n\tprivate $eavSetupFactory;"
-			]
+			attributes=[]
 		)
 
 		install_patch.add_method(Phpmethod(
 			'__construct',
 			params=[
-				'ModuleDataSetupInterface $moduleDataSetup',
-				'EavSetupFactory $eavSetupFactory'
+				'protected ModuleDataSetupInterface $moduleDataSetup',
+				'protected EavSetupFactory $eavSetupFactory'
 			],
-			body="$this->moduleDataSetup = $moduleDataSetup;\n$this->eavSetupFactory = $eavSetupFactory;",
+			body="",
 			docstring=[
 				'Constructor',
 				'',
@@ -150,6 +147,7 @@ class EavEntityAttributeSnippet(Snippet):
 
 		install_patch.add_method(Phpmethod(
 			'apply',
+			return_type='void',
 			body_start='$this->moduleDataSetup->getConnection()->startSetup();',
 			body_return='$this->moduleDataSetup->getConnection()->endSetup();',
 			body="""
@@ -163,6 +161,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
 		install_patch.add_method(Phpmethod(
 			'revert',
+			return_type='void',
 			body_start='$this->moduleDataSetup->getConnection()->startSetup();',
 			body_return='$this->moduleDataSetup->getConnection()->endSetup();',
 			body="""
@@ -173,6 +172,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 		install_patch.add_method(Phpmethod(
 			'getAliases',
 			body="return [];",
+			return_type='array',
 			docstring=[
 				'{@inheritdoc}'
 			]
@@ -181,6 +181,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 		install_patch.add_method(Phpmethod(
 			'getDependencies',
 			access='public static',
+			return_type='array',
 			body="return [\n\n];",
 			docstring=[
 				'{@inheritdoc}'

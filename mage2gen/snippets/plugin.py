@@ -120,8 +120,10 @@ class PluginSnippet(Snippet):
 			params.append('//$functionParam')
 
 		body = "//Your plugin code"
+		return_type = ''
 		if plugintype == self.TYPE_BEFORE:
 			body += "\nreturn [" + ', '.join(returnParams) + "];"
+			return_type = 'array'
 		elif plugintype == self.TYPE_AROUND:
 			body += "\n$result = $proceed(" + ', '.join(returnParams) + ");"
 			body += "\nreturn $result;"
@@ -132,7 +134,8 @@ class PluginSnippet(Snippet):
 		plugin.add_method(Phpmethod(
 			pluginmethodname,
 			body=body,
-			params=params
+			params=params,
+   			return_type=return_type
 		))
 	
 		# Add plug first will add the module namespace to PhpClass

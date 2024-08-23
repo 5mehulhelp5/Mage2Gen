@@ -245,27 +245,23 @@ class SystemSnippet(Snippet):
 				dependencies=[
 					'Magento\Framework\App\Helper\AbstractHelper',
 					'Magento\Store\Model\ScopeInterface',
-					'Magento\Framework\Exception\LocalizedException'
+					'Magento\Framework\Exception\LocalizedException',
+					'Magento\Framework\Mail\Template\TransportBuilder',
+					'Magento\Store\Model\StoreManagerInterface',
+					'Magento\Framework\App\Helper\Context'
 				],
-				attributes=[
-					'protected $transportBuilder;',
-					'protected $storeManager;'
-				]
+				attributes=[]
 			)
 
 			mail_helper.add_method(
 				Phpmethod(
 					'__construct',
 					params=[
-						'\\Magento\\Framework\\App\\Helper\\Context $context',
-						'\\Magento\\Framework\\Mail\\Template\\TransportBuilder $transportBuilder',
-						'\\Magento\\Store\Model\\StoreManagerInterface $storeManager'
+						'Context $context',
+						'protected TransportBuilder $transportBuilder',
+						'protected StoreManagerInterface $storeManager'
 					],
-					body="""
-							$this->transportBuilder = $transportBuilder;
-							$this->storeManager = $storeManager;
-							parent::__construct($context);
-					""",
+					body="""""",
 					docstring=[
 						'@param \Magento\Framework\App\Helper\Context $context',
 						'@param \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder'
@@ -338,6 +334,7 @@ class SystemSnippet(Snippet):
 						    $to
 						);
 					""".format(email_template_config_identifier),
+					return_type='void',
 					docstring=[
 						'Send the {} Email'.format(email_name)
 					]

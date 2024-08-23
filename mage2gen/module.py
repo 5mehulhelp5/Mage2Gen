@@ -12,6 +12,20 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
+## A Magento 2 module generator library
+# Copyright (C) 2016 Maikel Martens
+#
+# This file is part of Mage2Gen.
+#
+# Mage2Gen is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -29,178 +43,179 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 # PHP Class
 ###############################################################################
 class Phpclass:
+    template_file = os.path.join(TEMPLATE_DIR, 'class.tmpl')
 
-	template_file = os.path.join(TEMPLATE_DIR,'class.tmpl')
+    def __init__(self, class_namespace, extends=None, implements=None, attributes=None, dependencies=None, abstract=False):
+        self.class_namespace = self.upper_class_namespace(class_namespace)
+        self.methods = []
+        self.extends = extends
+        self.implements = implements if implements else []
+        self.attributes = attributes if attributes else []
+        self.dependencies = dependencies if dependencies else []
+        self.abstract = abstract
+        self.license = None
 
-	def __init__(self, class_namespace, extends=None, implements=None, attributes=None, dependencies=None, abstract=False):
-		self.class_namespace = self.upper_class_namespace(class_namespace)
-		self.methods = []
-		self.extends = extends
-		self.implements = implements if implements else []
-		self.attributes = attributes if attributes else []
-		self.dependencies = dependencies if dependencies else []
-		self.abstract = abstract
-		self.license = None
+    def __eq__(self, other):
+        return self.class_namespace == other.class_namespace
 
-	def __eq__(self, other):
-		return self.class_namespace == other.class_namespace
+    def __add__(self, other):
+        self.attributes = set(list(self.attributes) + list(other.attributes))
+        self.implements = set(list(self.implements) + list(other.implements))
+        self.dependencies = set(list(self.dependencies) + list(other.dependencies))
+        for method in other.methods:
+            self.add_method(method)
+        return self
 
-	def __add__(self, other):
-		self.attributes = set(list(self.attributes) + list(other.attributes))
-		self.implements = set(list(self.implements) + list(other.implements))
-		self.dependencies = set(list(self.dependencies) + list(other.dependencies))
-		for method in other.methods :
-			self.add_method(method)
-		return self
+    @property
+    def class_name(self):
+        return self.class_namespace.split('\\')[-1]
 
-	@property
-	def class_name(self):
-		return self.class_namespace.split('\\')[-1]
+    @property
+    def namespace(self):
+        return '\\'.join(self.class_namespace.split('\\')[:-1])
 
-	@property
-	def namespace(self):
-		return '\\'.join(self.class_namespace.split('\\')[:-1])
+    def upper_class_namespace(self, class_namespace):
+        return '\\'.join(upperfirst(n) for n in class_namespace.strip('\\').split('\\'))
 
-	def upper_class_namespace(self, class_namespace):
-		return '\\'.join(upperfirst(n) for n in class_namespace.strip('\\').split('\\'))
+    def add_method(self, method):
+        if method in self.methods:
+            method_index = self.methods.index(method)
+            self.methods[method_index] = self.methods[method_index] + method
+        else:
+            self.methods.append(method)
 
-	def add_method(self, method):
-		if method in self.methods:
-			method_index = self.methods.index(method)
-			self.methods[method_index] = self.methods[method_index] + method
-		else :
-			self.methods.append(method)
+    def context_data(self):
+        methods = '\n\n'.join(m.generate() for m in self.methods)
+        if methods:
+            methods = '\n' + methods
 
-	def context_data(self):
-		methods = '\n\n'.join(m.generate() for m in self.methods)
-		if methods:
-			methods = '\n' + methods
+        if self.attributes:
+            attributes = '\n\t' + '\n\t'.join(self.attributes) + '\n'
+        else:
+            attributes = ''
 
-		if self.attributes:
-			attributes = '\n\t' + '\n\t'.join(self.attributes) + '\n'
-		else:
-			attributes = ''
+        dependencies = ';\n'.join("use %s" % (dependency) for dependency in sorted(self.dependencies))
+        if dependencies:
+            dependencies = '\n' + dependencies + ';\n'
 
-		dependencies = ';\n'.join("use %s" %(dependency) for dependency in sorted(self.dependencies))
-		if dependencies:
-			dependencies = '\n' + dependencies + ';\n'
+        return {
+            'license': self.license.get_php_docstring() if self.license else '',
+            'namespace': self.namespace,
+            'class_name': self.class_name,
+            'methods': methods,
+            'extends': ' extends {}'.format(self.extends) if self.extends else '',
+            'implements': ' implements {}'.format(', '.join(self.implements)) if self.implements else '',
+            'attributes': attributes,
+            'dependencies': dependencies,
+            'abstract': 'abstract ' if self.abstract else '',
+        }
 
-		return {
-			'license': self.license.get_php_docstring() if self.license else '',
-			'namespace': self.namespace,
-			'class_name': self.class_name,
-			'methods': methods,
-			'extends': ' extends {}'.format(self.extends) if self.extends else '',
-			'implements': ' implements {}'.format(', '.join(self.implements)) if self.implements else '',
-			'attributes': attributes,
-			'dependencies': dependencies,
-			'abstract': 'abstract ' if self.abstract else '',
-		}
+    def generate(self):
+        with open(self.template_file, 'rb') as tmpl:
+            template = tmpl.read().decode('utf-8')
 
-	def generate(self):
-		with open(self.template_file, 'rb') as tmpl:
-			template = tmpl.read().decode('utf-8')
+        return template.format(
+            **self.context_data()
+        ).replace('\t', '    ')  # Make generated code PSR2 compliant
 
-		return template.format(
-			**self.context_data()
-		).replace('\t', '    ') # Make generated code PSR2 compliant
+    def save(self, root_location):
+        path = os.path.join(root_location, self.class_namespace.replace('\\', '/') + '.php')
+        try:
+            os.makedirs(os.path.dirname(path))
+        except Exception:
+            pass
 
-	def save(self, root_location):
-		path = os.path.join(root_location, self.class_namespace.replace('\\', '/') + '.php')
-		try:
-			os.makedirs(os.path.dirname(path))
-		except Exception:
-			pass
-
-		with open(path, 'w+', encoding='utf-8') as class_file:
-			class_file.writelines(self.generate())
+        with open(path, 'w+', encoding='utf-8') as class_file:
+            class_file.writelines(self.generate())
 
 class Phpmethod:
-	PUBLIC = 'public'
-	PROTECTED = 'protected'
-	PRIVATE = 'private'
+    PUBLIC = 'public'
+    PROTECTED = 'protected'
+    PRIVATE = 'private'
 
-	def __init__(self, name, **kwargs):
-		"""
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.access = kwargs.get('access', self.PUBLIC)
+        self.params = kwargs.get('params', [])
+        self.return_type = kwargs.get('return_type', '')
+        self.docstring = kwargs.get('docstring', [])
+        self.body = [kwargs.get('body', '')]
+        self.end_body = [kwargs.get('end_body', '')]
+        self.body_start = kwargs.get('body_start', '')
+        self.body_return = kwargs.get('body_return', '')
+        self.template_file = os.path.join(TEMPLATE_DIR, 'method.tmpl')
 
-		:rtype:
-		"""
-		self.name = name
-		self.access = kwargs.get('access', self.PUBLIC)
-		self.params = kwargs.get('params', [])
-		self.docstring = kwargs.get('docstring',[])
-		self.body = [kwargs.get('body', '')]
-		self.end_body = [kwargs.get('end_body', '')]
-		self.body_start = kwargs.get('body_start', '')
-		self.body_return = kwargs.get('body_return', '')
-		self.template_file = os.path.join(TEMPLATE_DIR, 'method.tmpl')
+    def __eq__(self, other):
+        return self.name == other.name
 
-	def __eq__(self, other):
-		return self.name == other.name
+    def __add__(self, other):
+        for code in other.body:
+            if code not in self.body:
+                self.body.append(code)
+        for code in other.end_body:
+            if code not in self.end_body:
+                self.end_body.insert(0, code)
 
-	def __add__(self, other):
-		for code in other.body:
-			if code not in self.body:
-				self.body.append(code)
-		for code in other.end_body:
-			if code not in self.end_body:
-				self.end_body.insert(0, code)
+        for param in other.params:
+            if param not in self.params:
+                self.params.append(param)
+        return self
 
-		for param in other.params:
-			if param not in self.params:
-				self.params.append(param)
-		return self
+    def __hash__(self):
+        return hash(self.name)
 
-	def __hash__(self):
-		return hash(self.name)
+    def params_code(self):
+        length = sum(len(s) for s in self.params)
+        if length > 40:
+            return '\n\t\t' + ',\n\t\t'.join(self.params) + '\n\t'
+        else:
+            return ', '.join(self.params)
 
-	def params_code(self):
-		length = sum(len(s) for s in self.params)
-		if length > 40:
-			return '\n\t\t' + ',\n\t\t'.join(self.params) + '\n\t'
-		else:
-			return ', '.join(self.params)
+    def return_type_code(self):
+        if self.return_type:
+            return ': ' + self.return_type
+        return ''
 
-	def docstring_code(self):
-		if not self.docstring:
-			return '';
+    def docstring_code(self):
+        if not self.docstring:
+            return ''
 
-		docstring = '/**'
-		docstring +=  '\n\t *' + '\n\t *'.join(" {}".format(line.strip()) if len(line.strip()) else '' for line in self.docstring)
-		docstring += '\n\t */\n\t'
-		return docstring
+        docstring = '/**'
+        docstring += '\n\t *' + '\n\t *'.join(" {}".format(line.strip()) if len(line.strip()) else '' for line in self.docstring)
+        docstring += '\n\t */\n\t'
+        return docstring
 
+    def add_body_code(self, code):
+        if code not in self.body:
+            self.append(code)
 
-	def add_body_code(self,code):
-		if code not in self.body:
-			self.append(code)
+    def body_code(self):
+        body_string = ''
+        if self.body_start:
+            body_string += self.body_start
+        for body_code in self.body:
+            if body_code:
+                body_string += '\n\t\t'.join(s.strip('\t') for s in body_code.splitlines()) + '\n\n\t\t'
+        for body_code in self.end_body:
+            if body_code:
+                body_string += '\n\t\t'.join(s.strip('\t') for s in body_code.splitlines()) + '\n\n\t\t'
+        if self.body_return:
+            body_string += self.body_return
+        return body_string.strip()
 
-	def body_code(self):
-		body_string = ''
-		if self.body_start:
-			body_string += self.body_start
-		for body_code in self.body:
-			if body_code:
-				body_string += '\n\t\t'.join(s.strip('\t') for s in body_code.splitlines()) + '\n\n\t\t'
-		for body_code in self.end_body:
-			if body_code:
-				body_string += '\n\t\t'.join(s.strip('\t') for s in body_code.splitlines()) + '\n\n\t\t'
-		if self.body_return:
-			body_string += self.body_return
-		return body_string.strip()
+    def generate(self):
+        with open(self.template_file, 'rb') as tmpl:
+            template = tmpl.read().decode('utf-8')
 
-	def generate(self):
-		with open(self.template_file, 'rb') as tmpl:
-			template = tmpl.read().decode('utf-8')
-
-		return template.format(
-			method=self.name,
-			access=self.access,
-			docstring=self.docstring_code(),
-			params=self.params_code(),
-			body=self.body_code(),
-			brace_break= ' ' if len(self.params_code()) > 40 else '\n\t'
-		).replace('\t', '    ') # Make generated code PSR2 compliant
+        return template.format(
+            method=self.name,
+            access=self.access,
+            docstring=self.docstring_code(),
+            params=self.params_code(),
+            return_type=self.return_type_code(),
+            body=self.body_code(),
+            brace_break=' ' if len(self.params_code()) > 40 else '\n\t'
+        ).replace('\t', '    ')  # Make generated code PSR2 compliant
 
 ###############################################################################
 # XML

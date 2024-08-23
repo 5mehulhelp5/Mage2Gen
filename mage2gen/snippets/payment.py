@@ -36,7 +36,11 @@ class PaymentSnippet(Snippet):
 		payment_class_name = method_name
 
 		payment_class = Phpclass('Model\\Payment\\'+payment_class_name,
-			extends='\Magento\Payment\Model\Method\AbstractMethod',
+			extends='AbstractMethod',
+			dependencies=[
+				'Magento\\Quote\\Api\\Data\\CartInterface',
+				'Magento\Payment\Model\Method\AbstractMethod'
+         ],
 			attributes=[
 				'protected $_code = "'+payment_code+'";',
 				'protected $_isOffline = true;'
@@ -45,8 +49,9 @@ class PaymentSnippet(Snippet):
 		payment_class.add_method(Phpmethod(
 			'isAvailable',
 			params=[
-				'\\Magento\\Quote\\Api\\Data\\CartInterface $quote = null'
+				'CartInterface $quote = null'
 			],
+			return_type='bool',
 			body="return parent::isAvailable($quote);" 
 		))
 	

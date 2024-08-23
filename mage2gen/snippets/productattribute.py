@@ -153,17 +153,14 @@ class ProductAttributeSnippet(Snippet):
 				'Magento\\Eav\\Setup\\EavSetup',
 				'Magento\\Eav\\Model\\Entity\\Attribute\\ScopedAttributeInterface'
 			],
-			attributes=[
-				"/**\n\t * @var ModuleDataSetupInterface\n\t */\n\tprivate $moduleDataSetup;",
-				"/**\n\t * @var EavSetupFactory\n\t */\n\tprivate $eavSetupFactory;"
-			]
+			attributes=[]
 		)
 
 		install_patch.add_method(Phpmethod(
 			'__construct',
 			params=[
-				'ModuleDataSetupInterface $moduleDataSetup',
-				'EavSetupFactory $eavSetupFactory'
+				'private readonly ModuleDataSetupInterface $moduleDataSetup',
+				'private readonly EavSetupFactory $eavSetupFactory'
 			],
 			body="$this->moduleDataSetup = $moduleDataSetup;\n$this->eavSetupFactory = $eavSetupFactory;",
 			docstring=[
@@ -176,6 +173,7 @@ class ProductAttributeSnippet(Snippet):
 
 		install_patch.add_method(Phpmethod(
 			'apply',
+			return_type='void',
 			body_start='$this->moduleDataSetup->getConnection()->startSetup();',
 			body_return='$this->moduleDataSetup->getConnection()->endSetup();',
 			body="""
@@ -189,6 +187,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
 		install_patch.add_method(Phpmethod(
 			'revert',
+   			return_type='void',
 			body_start='$this->moduleDataSetup->getConnection()->startSetup();',
 			body_return='$this->moduleDataSetup->getConnection()->endSetup();',
 			body="""
@@ -198,6 +197,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 		))
 		install_patch.add_method(Phpmethod(
 			'getAliases',
+			return_type='array',
 			body="return [];",
 			docstring=[
 				'{@inheritdoc}'
@@ -206,6 +206,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
 		install_patch.add_method(Phpmethod(
 			'getDependencies',
+			return_type='array',
 			access='public static',
 			body="return [\n\n];",
 			docstring=[
@@ -250,6 +251,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
 		source_model.add_method(Phpmethod(
 			'getAllOptions',
+			return_type='array',
 			body="$this->_options = " + options_php_array_string + ";\n"
 				 "return $this->_options;",
 			docstring=[
@@ -274,6 +276,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 							'comment' => $attributeCode . ' column',
 						],
 					];""",
+				return_type='array',
 				docstring=[
 					'@return array'
 				]
@@ -288,6 +291,7 @@ $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
 				
 					return $indexes;
 				""",
+				return_type='array',
 				docstring=[
 					'@return array'
 				]

@@ -124,7 +124,8 @@ class CustomerAttributeSnippet(Snippet):
 					'getAllOptions',
 					'',
 					'@return array',
-				]
+				],
+    			return_type='array'
 			))
 
 			self.add_class(source_model_class)
@@ -190,21 +191,17 @@ class CustomerAttributeSnippet(Snippet):
 				'Magento\\Eav\\Model\\Entity\\Attribute\\Set',
 				 entity_type_identifier
 			 ],
-			 attributes=[
-				 "/**\n\t * @var ModuleDataSetupInterface\n\t */\n\tprivate $moduleDataSetup;",
-				 "/**\n\t * @var CustomerSetup\n\t */\n\tprivate $customerSetupFactory;",
-				 "/**\n\t * @var SetFactory\n\t */\n\tprivate $attributeSetFactory;"
-			 ]
+			 attributes=[]
 		 )
 
 		install_patch.add_method(Phpmethod(
 			'__construct',
 			params=[
-				'ModuleDataSetupInterface $moduleDataSetup',
-				'CustomerSetupFactory $customerSetupFactory',
-				'SetFactory $attributeSetFactory'
+				'private readonly ModuleDataSetupInterface $moduleDataSetup',
+				'private readonly CustomerSetupFactory $customerSetupFactory',
+				'private readonly SetFactory $attributeSetFactory'
 			],
-			body="$this->moduleDataSetup = $moduleDataSetup;\n$this->customerSetupFactory = $customerSetupFactory;\n$this->attributeSetFactory = $attributeSetFactory;",
+			body="",
 			docstring=[
 				'Constructor',
 				'',
@@ -236,12 +233,14 @@ class CustomerAttributeSnippet(Snippet):
 			$attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
 
 			""".format(entity_type_alias=entity_type_alias) + methodBody,
-			docstring=['{@inheritdoc}']))
+			docstring=['@inheritdoc'],
+   			return_type='void'))
 
 		install_patch.add_method(Phpmethod(
 			'revert',
 			body_start='$this->moduleDataSetup->getConnection()->startSetup();',
 			body_return='$this->moduleDataSetup->getConnection()->endSetup();',
+   			return_type='void',
 			body="""
 				/** @var CustomerSetup $customerSetup */
 				$customerSetup = $this->customerSetupFactory->create(['setup' => $this->moduleDataSetup]);
@@ -252,6 +251,7 @@ class CustomerAttributeSnippet(Snippet):
 		install_patch.add_method(Phpmethod(
 			'getAliases',
 			body="return [];",
+			return_type='array',
 			docstring=[
 				'{@inheritdoc}'
 			]
@@ -260,6 +260,7 @@ class CustomerAttributeSnippet(Snippet):
 		install_patch.add_method(Phpmethod(
 			'getDependencies',
 			access='public static',
+			return_type='array',
 			body="return [\n\n];",
 			docstring=[
 				'{@inheritdoc}'
@@ -430,7 +431,8 @@ class CustomerAttributeSnippet(Snippet):
 				'@param $cartId',
 				'\\Magento\\Quote\\Api\\Data\\AddressInterface $address',
 				'@return array'
-			]
+			],
+			return_type='array',
 		))
 
 		# Add plug first will add the module namespace to PhpClass

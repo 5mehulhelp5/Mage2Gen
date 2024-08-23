@@ -150,14 +150,12 @@ class ProductTypeSnippet(Snippet):
                 'Magento\\Framework\\Setup\\ModuleDataSetupInterface',
                 'Magento\\Eav\\Setup\\EavSetup',
                 'Magento\\Eav\\Setup\\EavSetupFactory'],
-            attributes=[
-                'private $eavSetupFactory;'
-            ])
+            attributes=[])
 
         install_data.add_method(Phpmethod(
             '__construct',
-            params=['EavSetupFactory $eavSetupFactory'],
-            body="$this->eavSetupFactory = $eavSetupFactory;",
+            params=['private readonly EavSetupFactory $eavSetupFactory'],
+            body="",
             docstring=[
                 'Constructor',
                 '',

@@ -38,55 +38,58 @@ class ConsoleSnippet(Snippet):
 	def add(self,action_name,short_description, extra_params=None):
 
 		console = Phpclass(
-			'Console\\Command\\'+action_name, 
-			extends='Command',
-			dependencies = [
-			'Symfony\Component\Console\Command\Command',
-			'Symfony\Component\Console\Input\InputArgument',
-			'Symfony\Component\Console\Input\InputOption',
-			'Symfony\Component\Console\Input\InputInterface',
-			'Symfony\Component\Console\Output\OutputInterface'
-			],
-			attributes = [
-				'const NAME_ARGUMENT = "name";',
-				'const NAME_OPTION = "option";'
-			]
-		)
+            'Console\\Command\\' + action_name, 
+            extends='Command',
+            dependencies=[
+                'Symfony\Component\Console\Command\Command',
+                'Symfony\Component\Console\Input\InputArgument',
+                'Symfony\Component\Console\Input\InputOption',
+                'Symfony\Component\Console\Input\InputInterface',
+                'Symfony\Component\Console\Output\OutputInterface'
+            ],
+            attributes=[
+                'private const NAME_ARGUMENT = "name";',
+                'private const NAME_OPTION = "option";'
+            ]
+        )
 
 		console.add_method(
-			Phpmethod(
-			'execute',
-			access='protected',
-			params=['InputInterface $input','OutputInterface $output'],
-			body="""
-			$name = $input->getArgument(self::NAME_ARGUMENT);
-			$option = $input->getOption(self::NAME_OPTION);
-			$output->writeln("Hello " . $name);
-			""",
-			docstring=['{@inheritdoc}']
-			)
-		)
+            Phpmethod(
+                'execute',
+                access='protected',
+                params=['InputInterface $input', 'OutputInterface $output'],
+                return_type='int',
+                body="""
+$name = $input->getArgument(self::NAME_ARGUMENT);
+$option = $input->getOption(self::NAME_OPTION);
+$output->writeln("Hello " . $name);
+return Command::SUCCESS;
+                """,
+                docstring=['@inheritdoc']
+            )
+        )
 
 		console.add_method(
-			Phpmethod(
-				'configure',
-				access='protected',
-				body=""" 
-				$this->setName("{module_name}:{action_name}");
-				$this->setDescription("{short_description}");
-				$this->setDefinition([
-				    new InputArgument(self::NAME_ARGUMENT, InputArgument::OPTIONAL, "Name"),
-				    new InputOption(self::NAME_OPTION, "-a", InputOption::VALUE_NONE, "Option functionality")
-				]);
-				parent::configure();
-				""".format(
-					module_name=self.module_name.lower(),
-					action_name=action_name.lower(),
-					short_description=short_description
-				),
-				docstring=['{@inheritdoc}']
-			)
-		)
+            Phpmethod(
+                'configure',
+                access='protected',
+                return_type='void',
+                body="""
+$this->setName("{module_name}:{action_name}");
+$this->setDescription("{short_description}");
+$this->setDefinition([
+    new InputArgument(self::NAME_ARGUMENT, InputArgument::OPTIONAL, "Name"),
+    new InputOption(self::NAME_OPTION, "-a", InputOption::VALUE_NONE, "Option functionality")
+]);
+parent::configure();
+                """.format(
+                    module_name=self.module_name.lower(),
+                    action_name=action_name.lower(),
+                    short_description=short_description
+                ),
+                docstring=['@inheritdoc']
+            )
+        )
 
 		self.add_class(console);
 

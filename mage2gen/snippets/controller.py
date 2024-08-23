@@ -141,6 +141,7 @@ class ControllerSnippet(Snippet):
 		controller.add_method(Phpmethod(
 			'execute',
 			body=execute_body,
+			return_type='ResultInterface',
 			docstring=[
 				'Execute view action',
 				'',

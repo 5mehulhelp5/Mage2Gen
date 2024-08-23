@@ -49,88 +49,103 @@ class ConfigurationTypeSnippet(Snippet):
 
 		# Create SchemaLocator
 		schema_locator_class = Phpclass('Config\\{}\\SchemaLocator'.format(config_class_name), 
-			implements=['\\Magento\\Framework\\Config\\SchemaLocatorInterface'],
-			attributes=['protected $_schema = null;', 'protected $_perFileSchema = null;'],
-			dependencies=['Magento\\Framework\\Module\\Dir']
-		)
+            implements=['\\Magento\\Framework\\Config\\SchemaLocatorInterface'],
+            attributes=[
+                'private readonly ?string $schema;',
+                'private readonly ?string $perFileSchema;'
+            ],
+            dependencies=['Magento\\Framework\\Module\\Dir\\Reader']
+        )
 
-		schema_locator_class.add_method(Phpmethod('__construct', params=['\\Magento\\Framework\\Module\\Dir\\Reader $moduleReader'], body="""
-			$etcDir = $moduleReader->getModuleDir(Dir::MODULE_ETC_DIR, '{module_name}');
-			$this->_schema = $etcDir . '/{config_name}_merged.xsd';
-			$this->_perFileSchema = $etcDir . '/{config_name}.xsd';
-			""".format(module_name=self.module_name, config_name=config_name),
-			docstring=['@param \Magento\Framework\Module\Dir\Reader $moduleReader']
-			))
+		schema_locator_class.add_method(Phpmethod('__construct', params=['private Reader $moduleReader'], body="""
+$etcDir = $moduleReader->getModuleDir(Dir::MODULE_ETC_DIR, 'Experius_Test');
+$this->schema = $etcDir . '/example_merged.xsd';
+$this->perFileSchema = $etcDir . '/example.xsd';
+"""))
 
-		schema_locator_class.add_method(Phpmethod('getSchema', body="return $this->_schema;", 
-			docstring=['Get path to merged config schema', '', '@return string|null']))
-		schema_locator_class.add_method(Phpmethod('getPerFileSchema', body="return $this->_perFileSchema;", 
-			docstring=['Get path to pre file validation schema', '', '@return string|null']))
+		schema_locator_class.add_method(Phpmethod('getSchema', return_type='?string', body="""
+return $this->schema;
+"""))
+
+		schema_locator_class.add_method(Phpmethod('getPerFileSchema', return_type='?string', body="""
+return $this->perFileSchema;
+"""))
 
 		self.add_class(schema_locator_class)
 
 		# Create Converter
 		converter_class = Phpclass('Config\\{}\\Converter'.format(config_class_name), implements=['\\Magento\\Framework\\Config\\ConverterInterface'])
 
-		converter_class.add_method(Phpmethod('convert', params=['$source'], docstring=[
+		converter_class.add_method(Phpmethod('convert', params=['DOMDocument $source'], return_type='array', docstring=[
 				'Convert dom node tree to array',
 				'',
-				'@param \DOMDocument $source',
+				'@param DOMDocument $source',
 				'@return array',
 			],
 			body="""
-			$output = [];
-			$xpath = new \DOMXPath($source);
-			$nodes = $xpath->evaluate('/config/{node_name}');
+$output = [];
+$xpath = new DOMXPath($source);
+$nodes = $xpath->evaluate('/config/example');
 
-			/** @var $node \DOMNode */
-			foreach ($nodes as $node) {{
-			    $nodeId = $node->attributes->getNamedItem('id');
+/** @var DOMNode $node */
+foreach ($nodes as $node) {
+    $nodeId = $node->attributes->getNamedItem('id')->nodeValue;
 
-			    $data = [];
-			    $data['id'] = $nodeId;
-			    foreach ($node->childNodes as $childNode) {{
-			        if ($childNode->nodeType != XML_ELEMENT_NODE) {{
-			            continue;
-			        }}
+    $data = [];
+    $data['id'] = $nodeId;
+    foreach ($node->childNodes as $childNode) {
+        if ($childNode->nodeType !== XML_ELEMENT_NODE) {
+            continue;
+        }
 
-			        $data[$childNode->nodeName] = $childNode->nodeValue;
-			    }}
-			    $output['{node_name}'][$nodeId] = $data;
-			}}
+        $data[$childNode->nodeName] = $childNode->nodeValue;
+    }
+    $output['example'][$nodeId] = $data;
+}
 
-			return $output;
-			""".format(node_name=node_name)
-		))
+return $output;
+		"""))
 
 		self.add_class(converter_class)
 
 		# Create Reader
-		reader_class = Phpclass('Config\\{}\\Reader'.format(config_class_name), extends='\\Magento\\Framework\\Config\\Reader\\Filesystem', attributes=[
-			"protected $_idAttributes = [\n        '/config/{}' => 'id',\n    ];".format(node_name)
-		])
+		reader_class = Phpclass('Config\\{}\\Reader'.format(config_class_name), 
+			extends='\\Magento\\Framework\\Config\\Reader\\Filesystem',
+			attributes=[
+				'protected array $_idAttributes = [',
+				"    '/config/example' => 'id',",
+				'];'
+			],
+			dependencies=[
+				'Magento\\Framework\\Config\\FileResolverInterface',
+				'Converter',
+				'SchemaLocator',
+				'Magento\\Framework\\Config\\ValidationStateInterface',
+				'Magento\\Framework\\Config\\Dom'
+			]
+		)
 
 		reader_class.add_method(Phpmethod('__construct', params=[
-				'\\Magento\\Framework\\Config\\FileResolverInterface $fileResolver',
-				'Converter $converter',
-				'SchemaLocator $schemaLocator',
-				'\\Magento\\Framework\\Config\\ValidationStateInterface $validationState',
-				"$fileName = '{}.xml'".format(config_name),
-				'$idAttributes = []',
-				"$domDocumentClass = 'Magento\\Framework\\Config\\Dom'",
-				"$defaultScope = 'global'",
-			], body="""
-			parent::__construct(
-			    $fileResolver,
-			    $converter,
-			    $schemaLocator,
-			    $validationState,
-			    $fileName,
-			    $idAttributes,
-			    $domDocumentClass,
-			    $defaultScope
-			);
-			"""))
+			'private FileResolverInterface $fileResolver',
+			'private Converter $converter',
+			'private SchemaLocator $schemaLocator',
+			'private ValidationStateInterface $validationState',
+			'private string $fileName = \'example.xml\'',
+			'private array $idAttributes = []',
+			'private string $domDocumentClass = Dom::class',
+			'private string $defaultScope = \'global\''
+		], body="""
+parent::__construct(
+    $fileResolver,
+    $converter,
+    $schemaLocator,
+    $validationState,
+    $fileName,
+    $idAttributes,
+    $domDocumentClass,
+    $defaultScope
+);
+		"""))
 
 		self.add_class(reader_class)
 

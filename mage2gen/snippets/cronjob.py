@@ -32,24 +32,27 @@ class CronjobSnippet(Snippet):
 
 	def add(self, cronjob_class, schedule='*/5 * * * *', cronjob_group='default', extra_params=None):
 
-		crontab_class = Phpclass('Cron\\{}'.format(upperfirst(cronjob_class)), attributes=[
-			'protected $logger;'
-		])
+		crontab_class = Phpclass('Cron\\{}'.format(upperfirst(cronjob_class)), attributes=[],
+			dependencies = [
+				'Psr\\Log\\LoggerInterface',
+			]
+		)
 
 		crontab_class.add_method(Phpmethod(
             '__construct',
             params=[
-                '\Psr\Log\LoggerInterface $logger',
+                'private LoggerInterface $logger',
             ],
-            body="$this->logger = $logger;",
+            body="",
             docstring=[
             	'Constructor',
             	'',
-            	'@param \\Psr\\Log\\LoggerInterface $logger',
+            	'@param LoggerInterface $logger',
             ]
         ))
 		crontab_class.add_method(Phpmethod('execute',
-			body='$this->logger->addInfo("Cronjob '+cronjob_class+' is executed.");',
+			body='$this->logger->info("Cronjob '+cronjob_class+' is executed.");',
+			return_type='void',
 			docstring=[
             	'Execute the cron',
             	'',

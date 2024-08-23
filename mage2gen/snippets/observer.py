@@ -67,15 +67,17 @@ class ObserverSnippet(Snippet):
 		observerFolder.extend([split_event[0], ''.join(upperfirst(item) for item in split_event[1:])])
 		observer = Phpclass(
 			'\\'.join(observerFolder),
-			implements=['\Magento\Framework\Event\ObserverInterface'])
+			dependencies=['\Magento\Framework\Event\Observer', '\Magento\Framework\Event\ObserverInterface'],
+			implements=['ObserverInterface'])
 		observer.add_method(Phpmethod(
 			'execute',
-			params=['\\Magento\\Framework\\Event\\Observer $observer'],
+			params=['Observer $observer'],
 			body="//Your observer code",
+   			return_type='void',
 			docstring=[
 				'Execute observer',
 				'',
-				'@param \\Magento\\Framework\\Event\\Observer $observer',
+				'@param Observer $observer',
 				'@return void'
 			]
 		))

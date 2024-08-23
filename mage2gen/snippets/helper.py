@@ -31,7 +31,8 @@ class HelperSnippet(Snippet):
 			'Helper\\'+helper_name, 
 			extends='AbstractHelper',
 			dependencies = [
-			'Magento\Framework\App\Helper\AbstractHelper'
+			'Magento\Framework\App\Helper\AbstractHelper',
+			'Magento\Framework\App\Helper\Context',
 			],
 			attributes = [
 			]
@@ -41,12 +42,12 @@ class HelperSnippet(Snippet):
 			Phpmethod(
 				'__construct',
 				params=[
-					'\\Magento\\Framework\\App\\Helper\\Context $context'
+					'Context $context'
 				],
 				body="""
 					parent::__construct($context);
 					""",
-				docstring=['@param \Magento\Framework\App\Helper\Context $context']
+				docstring=['@param Context $context']
 			)
 		)
 
@@ -54,6 +55,7 @@ class HelperSnippet(Snippet):
 			helper.add_method(
 				Phpmethod(
 				'isEnabled',
+				return_type='bool',
 				body="""
 				return true;
 				""",
