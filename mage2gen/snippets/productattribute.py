@@ -159,8 +159,8 @@ class ProductAttributeSnippet(Snippet):
 		install_patch.add_method(Phpmethod(
 			'__construct',
 			params=[
-				'private readonly ModuleDataSetupInterface $moduleDataSetup',
-				'private readonly EavSetupFactory $eavSetupFactory'
+				'private ModuleDataSetupInterface $moduleDataSetup',
+				'private EavSetupFactory $eavSetupFactory'
 			],
 			body="",
 			docstring=[

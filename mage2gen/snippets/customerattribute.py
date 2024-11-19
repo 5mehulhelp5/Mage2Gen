@@ -197,9 +197,9 @@ class CustomerAttributeSnippet(Snippet):
 		install_patch.add_method(Phpmethod(
 			'__construct',
 			params=[
-				'private readonly ModuleDataSetupInterface $moduleDataSetup',
-				'private readonly CustomerSetupFactory $customerSetupFactory',
-				'private readonly SetFactory $attributeSetFactory'
+				'private ModuleDataSetupInterface $moduleDataSetup',
+				'private CustomerSetupFactory $customerSetupFactory',
+				'private SetFactory $attributeSetFactory'
 			],
 			body="",
 			docstring=[
